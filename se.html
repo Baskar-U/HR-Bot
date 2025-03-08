@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Interview Question Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        textarea { width: 80%; height: 150px; margin: 10px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+        #questionContainer { font-size: 18px; font-weight: bold; margin: 20px; }
+        #answer { width: 80%; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <h1>AI-Powered Interview Question Generator</h1>
+
+    <label for="resume">Paste Your Resume:</label>
+    <textarea id="resume" placeholder="Paste your resume here..."></textarea>
+    <br>
+    <button onclick="startInterview()">Start Interview</button>
+
+    <div id="questionContainer" style="display:none;"></div>
+    <input type="text" id="answer" style="display:none;" placeholder="Your Answer Here...">
+    <button id="nextBtn" onclick="nextQuestion()" style="display:none;">Next</button>
+
+    <script>
+        let extractedKeywords = [];
+        let questions = [];
+        let questionIndex = 0;
+        let nlpModel;
+
+        async function loadModel() {
+            console.log("Loading NLP model...");
+            nlpModel = await use.load();
+            console.log("Model loaded successfully!");
+        }
+
+        async function startInterview() {
+            let resumeText = document.getElementById("resume").value.trim();
+
+            if (resumeText === "") {
+                alert("Please paste your resume before starting the interview.");
+                return;
+            }
+
+            extractedKeywords = extractKeywords(resumeText);
+            await generateQuestions();
+
+            document.getElementById("questionContainer").style.display = "block";
+            document.getElementById("answer").style.display = "block";
+            document.getElementById("nextBtn").style.display = "block";
+
+            askNextQuestion();
+        }
+
+        function extractKeywords(text) {
+            let skills = ["Python", "TensorFlow", "Flutter", "Django", "React", "Networking", "AI", "Cybersecurity"];
+            let experienceWords = ["Intern", "Software Engineer", "Research", "Developer"];
+            let certificationWords = ["Certified", "AWS", "NPTEL", "CCNA"];
+            let projectWords = ["project", "application", "tool", "chatbot"];
+            let extracted = [];
+
+            let words = text.split(/\s+/);
+
+            words.forEach(word => {
+                if (skills.includes(word)) extracted.push(word);
+                if (experienceWords.includes(word)) extracted.push(word);
+                if (certificationWords.includes(word)) extracted.push(word);
+                if (projectWords.includes(word)) extracted.push(word);
+            });
+
+            return extracted.length > 0 ? extracted : ["your experience"];
+        }
+
+        async function generateQuestions() {
+            let templates = [
+                "Can you explain your experience with {keyword}?",
+                "How have you applied {keyword} in your projects?",
+                "What challenges did you face while working on {keyword}?",
+                "How did your {keyword} certification help in real-world scenarios?",
+                "What did you learn during your internship at {keyword}?",
+                "How does {keyword} impact modern technology?",
+                "Can you give an example of a problem you solved using {keyword}?",
+                "What was your most interesting project related to {keyword}?",
+                "How would you improve your skills in {keyword}?",
+                "What is the most common mistake when working with {keyword}?"
+            ];
+
+            for (let keyword of extractedKeywords) {
+                let randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+                let question = randomTemplate.replace("{keyword}", keyword);
+
+                let isValid = await validateQuestion(question);
+                if (isValid) {
+                    questions.push(question);
+                }
+            }
+
+            shuffleArray(questions);
+        }
+
+        async function validateQuestion(question) {
+            let embeddings = await nlpModel.embed([question]);
+            let similarityThreshold = 0.5;
+
+            for (let keyword of extractedKeywords) {
+                let keywordEmbedding = await nlpModel.embed([keyword]);
+                let similarity = cosineSimilarity(embeddings.arraySync()[0], keywordEmbedding.arraySync()[0]);
+
+                if (similarity > similarityThreshold) {
+                    return true; 
+                }
+            }
+            return false;
+        }
+
+        function cosineSimilarity(a, b) {
+            let dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+            let normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+            let normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+            return dotProduct / (normA * normB);
+        }
+
+        function askNextQuestion() {
+            if (questionIndex < 3 && questionIndex < questions.length) {
+                document.getElementById("questionContainer").innerText = questions[questionIndex];
+                document.getElementById("answer").value = "";
+            } else {
+                document.getElementById("questionContainer").style.display = "none";
+                document.getElementById("answer").style.display = "none";
+                document.getElementById("nextBtn").style.display = "none";
+                alert("Interview complete! Proceeding to next round...");
+            }
+        }
+
+        function nextQuestion() {
+            questionIndex++;
+            askNextQuestion();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        window.onload = loadModel;
+    </script>
+
+</body>
+</html>

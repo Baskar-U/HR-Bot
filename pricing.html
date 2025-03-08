@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - MockVox</title>
+    <style>
+        :root {
+            --primary-color: #10a37f;
+            --secondary-color: #f7f7f7;
+            --text-color: #353740;
+            --sidebar-width: 250px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #f9f9f9;
+            padding: 20px 0;
+            border-right: 1px solid #e5e5e5;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .logo {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary-color);
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            font-size: 20px;
+        }
+
+        .sidebar-menu {
+            margin-top: 20px;
+        }
+
+        .sidebar-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background-color: #e9e9e9;
+        }
+
+        .sidebar-item.active {
+            background-color: #e0f7f1;
+            border-right: 3px solid var(--primary-color);
+        }
+
+        /* Main content styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            height: 64px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 20px;
+        }
+
+        .nav-item {
+            margin-left: 20px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .content {
+            flex: 1;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #6e6e80;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Pricing Table */
+        .pricing-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .pricing-card {
+            background-color: var(--secondary-color);
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .pricing-card h2 {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .pricing-card p {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .select-button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .select-button:hover {
+            background-color: #0c8968;
+        }
+
+        /* Back to Home */
+        .back-button {
+            display: inline-block;
+            margin-top: 30px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 18px;
+        }
+
+        .back-button:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.png" alt="MockVox Logo" class="logo-img"> 
+            <div class="logo-text">MockVox</div>
+        </div>
+        <div class="sidebar-menu">
+            <div class="sidebar-item" data-page="index.html">Overview</div>
+            <div class="sidebar-item" data-page="trythis.html">Try This</div>
+            <div class="sidebar-item" data-page="settings.html">Settings</div>
+            <div class="sidebar-item" data-page="dashboard.html">Dashboard</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="navbar">
+            <div class="nav-item" data-page="documentation.html">Documentation</div>
+            <div class="nav-item" data-page="pricing.html">Pricing</div>
+            <div class="nav-item" data-page="api.html">API</div>
+            <div class="nav-item" data-page="profile.html">Profile</div>
+        </div>
+
+        <div class="content">
+            <h1>Pricing Plans</h1>
+            <p>Choose the right plan for your needs and start building intelligent applications.</p>
+            
+            <div class="pricing-table">
+                <div class="pricing-card">
+                    <h2>Free</h2>
+                    <p>Perfect for getting started</p>
+                    <div class="price">$0/month</div>
+                    <a href="#" class="select-button">Get Started</a>
+                </div>
+                <div class="pricing-card">
+                    <h2>Pro</h2>
+                    <p>For professionals & small teams</p>
+                    <div class="price">$29/month</div>
+                    <a href="#" class="select-button">Choose Pro</a>
+                </div>
+                <div class="pricing-card">
+                    <h2>Enterprise</h2>
+                    <p>For large businesses & enterprises</p>
+                    <div class="price">Custom Pricing</div>
+                    <a href="#" class="select-button">Contact Us</a>
+                </div>
+            </div>
+
+            <a href="index.html" class="back-button">← Back to Home</a>
+        </div>
+    </div>
+
+
+
+    <script>
+        // ✅ Sidebar Navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+    
+                const page = this.getAttribute("data-page");
+                if (page) {
+                    window.location.href = page;  // ✅ Redirect to correct page
+                }
+            });
+        });
+    
+        // ✅ Navbar Navigation (Including API, Pricing, Profile)
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const page = this.getAttribute("data-page");
+                if (page) {
+                    window.location.href = page;  // ✅ Redirects to the selected page
+                }
+            });
+        });
+    
+        // ✅ Try button redirects to index.html
+        document.querySelector('.try-button')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'index.html';
+        });
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MockVox Platform - API</title>
+    <style>
+        :root {
+            --primary-color: #10a37f;
+            --secondary-color: #f7f7f7;
+            --text-color: #353740;
+            --sidebar-width: 250px;
+            --code-bg: #f1f1f1;
+            --code-block-bg: #2d2d2d;
+            --code-block-color: #f8f8f2;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #f9f9f9;
+            padding: 20px 0;
+            border-right: 1px solid #e5e5e5;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .logo {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary-color);
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-weight: 600;
+            font-size: 20px;
+        }
+        
+        .sidebar-menu {
+            margin-top: 20px;
+        }
+        
+        .sidebar-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .sidebar-item.active {
+            background-color: #e0f7f1;
+            border-right: 3px solid var(--primary-color);
+        }
+        
+        /* Main content styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            height: 64px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 20px;
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .nav-item {
+            margin-left: 20px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+        
+        .content {
+            flex: 1;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 38px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        h2 {
+            font-size: 24px;
+            margin: 30px 0 15px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            font-size: 20px;
+            margin: 20px 0 10px;
+            font-weight: 500;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .api-intro {
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+        
+        .api-section {
+            margin-bottom: 40px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 30px;
+            background-color: white;
+        }
+        
+        .code-snippet {
+            background-color: var(--code-bg);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+        }
+        
+        .code-block {
+            background-color: var(--code-block-bg);
+            color: var(--code-block-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+        }
+        
+        .endpoint-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .endpoint-table th, .endpoint-table td {
+            border: 1px solid #e5e5e5;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        .endpoint-table th {
+            background-color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        .endpoint-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .method.get {
+            background-color: #e7f5ff;
+            color: #0c73b8;
+        }
+        
+        .method.post {
+            background-color: #e3f9e5;
+            color: #0b8a26;
+        }
+        
+        .api-key-section {
+            background-color: #f9f9f9;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .api-key-container {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .api-key-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f1f1f1;
+        }
+        
+        .api-key-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .api-key-btn:hover {
+            background-color: #0c8968;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e5e5;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Footer styles */
+        .footer {
+            background-color: var(--secondary-color);
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid #e5e5e5;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .footer-link {
+            margin: 0 15px;
+            color: var(--text-color);
+            text-decoration: none;
+        }
+        
+        .footer-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .copyright {
+            font-size: 14px;
+            color: #6e6e80;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo"></div>
+            <div class="logo-text">MockVox</div>
+        </div>
+        <div class="sidebar-menu">
+            <div class="sidebar-item">Overview</div>
+            <div class="sidebar-item">Try This</div>
+            <div class="sidebar-item">Settings</div>
+            <div class="sidebar-item">Dashboard</div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="navbar">
+            <div class="nav-item">Documentation</div>
+            <div class="nav-item">Pricing</div>
+            <div class="nav-item active">API</div>
+            <div class="nav-item">Profile</div>
+        </div>
+        
+        <div class="content">
+            <h1>API Documentation</h1>
+            <div class="api-intro">
+                <p>Welcome to the MockVox API. This comprehensive guide will help you integrate our powerful AI models into your applications with ease.</p>
+                <p>Our RESTful API supports JSON for request and response bodies, and uses standard HTTP response codes to indicate API success or errors.</p>
+            </div>
+            
+            <div class="api-key-section">
+                <div class="api-key-container">
+                    <span>Your API Key: </span>
+                    <input type="password" value="nx_sk_7b4s6df78s9df7s9d8f7" class="api-key-input" disabled>
+                    <button class="api-key-btn">Show</button>
+                    <button class="api-key-btn">Copy</button>
+                </div>
+                <button class="api-key-btn">Regenerate Key</button>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active">Quick Start</div>
+                <div class="tab">API Reference</div>
+                <div class="tab">Code Examples</div>
+                <div class="tab">Rate Limits</div>
+            </div>
+            
+            <div class="tab-content active">
+                <div class="api-section">
+                    <h2>Getting Started</h2>
+                    <p>To begin using the MockVox API, you'll need an API key. Your API key is shown above. Keep your API key secure and do not share it publicly.</p>
+                    
+                    <h3>Making Your First API Call</h3>
+                    <p>Here's a simple example of how to call our API using cURL:</p>
+                    
+                    <div class="code-block">
+curl https://api.mockvoxai.com/v1/completions \
+  -H "Authorization: Bearer nx_sk_7b4s6df78s9df7s9d8f7" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "mockvox-3",
+    "prompt": "Write a short poem about artificial intelligence.",
+    "max_tokens": 100,
+    "temperature": 0.7
+  }'
+                    </div>
+                    
+                    <h3>Response Format</h3>
+                    <p>The API returns responses in JSON format. Here's an example of a successful response:</p>
+                    
+                    <div class="code-block">
+{
+  "id": "cmpl-8s7d6f87s6df78s6d",
+  "object": "text_completion",
+  "created": 1678364583,
+  "model": "mockvox-3",
+  "choices": [
+    {
+      "text": "In silicon dreams and digital streams,\nThe mind of machines begins to gleam.\nLearning, growing, day by day,\nArtificial wisdom finding its way.\n\nWith algorithms deep and networks wide,\nA new intelligence comes to life.",
+      "index": 0,
+      "finish_reason": "length"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 7,
+    "completion_tokens": 45,
+    "total_tokens": 52
+  }
+}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content">
+                <div class="api-section">
+                    <h2>API Endpoints</h2>
+                    <p>The MockVox API provides several endpoints for different functionalities. Below is a comprehensive list of available endpoints:</p>
+                    
+                    <table class="endpoint-table">
+                        <thead>
+                            <tr>
+                                <th>Endpoint</th>
+                                <th>Method</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>/v1/completions</td>
+                                <td><span class="method post">POST</span></td>
+                                <td>Generate text completions using the specified model</td>
+                            </tr>
+                            <tr>
+                                <td>/v1/chat/completions</td>
+                                <td><span class="method post">POST</span></td>
+                                <td>Generate conversational responses in a chat format</td>
+                            </tr>
+                            <tr>
+                                <td>/v1/embeddings</td>
+                                <td><span class="method post">POST</span></td>
+                                <td>Create embeddings for text that can be used for search or clustering</td>
+                            </tr>
+                            <tr>
+                                <td>/v1/models</td>
+                                <td><span class="method get">GET</span></td>
+                                <td>List available models and their capabilities</td>
+                            </tr>
+                            <tr>
+                                <td>/v1/models/{model_id}</td>
+                                <td><span class="method get">GET</span></td>
+                                <td>Get information about a specific model</td>
+                            </tr>
+                            <tr>
+                                <td>/v1/fine-tunes</td>
+                                <td><span class="method post">POST</span></td>
+                                <td>Create a fine-tuned model based on a training dataset</td>
+                            </tr>
+                            <tr>
+                                <td>/v1/fine-tunes/{fine_tune_id}</td>
+                                <td><span class="method get">GET</span></td>
+                                <td>Get information about a specific fine-tuned model</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>Request Parameters</h3>
+                    <p>Each endpoint accepts specific parameters. Refer to the detailed documentation for each endpoint for the complete list of available parameters.</p>
+                </div>
+            </div>
+            
+            <div class="tab-content">
+                <div class="api-section">
+                    <h2>Code Examples</h2>
+                    
+                    <h3>Python</h3>
+                    <div class="code-block">
+import requests
+import json
+
+api_key = "nx_sk_7b4s6df78s9df7s9d8f7"
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "model": "mockvox-3",
+    "prompt": "Write a short story about space exploration.",
+    "max_tokens": 150,
+    "temperature": 0.8
+}
+
+response = requests.post(
+    "https://api.mockvoxai.com/v1/completions",
+    headers=headers,
+    data=json.dumps(data)
+)
+
+print(json.dumps(response.json(), indent=2))
+                    </div>
+                    
+                    <h3>JavaScript</h3>
+                    <div class="code-block">
+async function generateCompletion() {
+  const apiKey = 'nx_sk_7b4s6df78s9df7s9d8f7';
+  const response = await fetch('https://api.mockvoxai.com/v1/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'mockvox-3',
+      prompt: 'Write a short story about space exploration.',
+      max_tokens: 150,
+      temperature: 0.8
+    })
+  });
+  
+  const data = await response.json();
+  console.log(data);
+}
+
+generateCompletion();
+                    </div>
+                    
+                    <h3>Node.js</h3>
+                    <div class="code-block">
+const axios = require('axios');
+
+async function generateCompletion() {
+  const apiKey = 'nx_sk_7b4s6df78s9df7s9d8f7';
+  
+  try {
+    const response = await axios.post('https://api.mockvoxai.com/v1/completions', {
+      model: 'mockvox-3',
+      prompt: 'Write a short story about space exploration.',
+      max_tokens: 150,
+      temperature: 0.8
+    }, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log(response.data);
+  } catch (error) {
+    console.error('Error:', error.response ? error.response.data : error.message);
+  }
+}
+
+generateCompletion();
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content">
+                <div class="api-section">
+                    <h2>Rate Limits & Quotas</h2>
+                    <p>API requests are subject to rate limits to ensure fair usage and system stability. Rate limits vary by subscription plan.</p>
+                    
+                    <h3>Rate Limits by Plan</h3>
+                    <table class="endpoint-table">
+                        <thead>
+                            <tr>
+                                <th>Plan</th>
+                                <th>Requests per Minute</th>
+                                <th>Tokens per Month</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Starter</td>
+                                <td>5</td>
+                                <td>100,000</td>
+                            </tr>
+                            <tr>
+                                <td>Professional</td>
+                                <td>20</td>
+                                <td>500,000</td>
+                            </tr>
+                            <tr>
+                                <td>Enterprise</td>
+                                <td>Custom</td>
+                                <td>Unlimited</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>Rate Limit Response Headers</h3>
+                    <p>All API responses include the following headers to help you track your rate limit usage:</p>
+                    
+                    <ul style="list-style-type: disc; margin-left: 20px;">
+                        <li><span class="code-snippet">X-RateLimit-Limit</span>: The maximum number of requests you're permitted to make per minute.</li>
+                        <li><span class="code-snippet">X-RateLimit-Remaining</span>: The number of requests remaining in the current rate limit window.</li>
+                        <li><span class="code-snippet">X-RateLimit-Reset</span>: The time at which the current rate limit window resets in UTC epoch seconds.</li>
+                    </ul>
+                    
+                    <h3>Handling Rate Limit Errors</h3>
+                    <p>If you exceed your rate limit, the API will return a <span class="code-snippet">429 Too Many Requests</span> response code. We recommend implementing exponential backoff retry logic in your applications to handle these cases gracefully.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-links">
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Contact Us</a>
+                <a href="#" class="footer-link">Blog</a>
+                <a href="#" class="footer-link">Careers</a>
+            </div>
+            <p class="copyright">© 2025 MockVox, Inc. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        // Show/hide API key
+        const showKeyBtn = document.querySelector('.api-key-btn');
+        const apiKeyInput = document.querySelector('.api-key-input');
+        
+        showKeyBtn.addEventListener('click', function() {
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                this.textContent = 'Hide';
+            } else {
+                apiKeyInput.type = 'password';
+                this.textContent = 'Show';
+            }
+        });
+        
+        // ✅ Sidebar Navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+    
+                const page = this.textContent.trim();
+                if (page === 'Try This') {
+                    window.location.href = 'trythis.html';
+                } else if (page === 'Settings') {
+                    window.location.href = 'settings.html';
+                } else if (page === 'Dashboard') {
+                    window.location.href = 'dashboard.html';
+                } else if (page === 'Overview') {
+                    window.location.href = 'index.html';
+                }
+            });
+        });
+    
+        // ✅ Navbar Navigation (Including API Page)
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const page = this.textContent.trim();
+                if (page === 'Documentation') {
+                    window.location.href = 'documentation.html';
+                } else if (page === 'Pricing') {
+                    window.location.href = 'pricing.html';
+                } else if (page === 'API') {
+                    window.location.href = 'api.html';  // ✅ Redirects to API page
+                } else if (page === 'Profile') {
+                    window.location.href = 'profile.html';
+                }
+            });
+        });
+    
+        // ✅ Try button redirects to index.html
+        document.querySelector('.try-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'trythis.html';
+        });
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                tabContents[index].classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

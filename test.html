@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Assistant</title>
+    <link rel="stylesheet" href="test.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Landing page container -->
+    <div id="landing-container">
+        <div class="landing-content">
+            <h1>AI Interview Assistant</h1>
+            <p class="subtitle">Prepare for your next interview with our AI-powered assistant</p>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">💼</div>
+                    <h3>Personalized Practice</h3>
+                    <p>Tailored questions based on your background and resume</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Performance Analysis</h3>
+                    <p>Get detailed feedback on your interview performance</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💻</div>
+                    <h3>Coding Challenges</h3>
+                    <p>Test your technical skills with interactive coding problems</p>
+                </div>
+            </div>
+            <button id="try-now-btn" class="primary-btn">Try Interview Assistant</button>
+        </div>
+    </div>
+
+    <!-- Modal for instructions -->
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>How it works</h2>
+            <ol>
+                <li>Enter your details and upload your resume</li>
+                <li>Our AI will prepare relevant interview questions</li>
+                <li>Simply speak your answers naturally</li>
+                <li>Complete any technical challenges if applicable</li>
+                <li>Receive a detailed performance report</li>
+            </ol>
+            <button id="continue-to-form-btn" class="primary-btn">Continue</button>
+        </div>
+    </div>
+
+    <!-- User details container -->
+    <div id="welcome-container" class="hidden">
+        <div class="welcome-card">
+            <h1>AI Interview Assistant</h1>
+            <p>Complete your details to start a personalized interview experience</p>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="username">Full Name</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="background">Background</label>
+                    <select id="background" required>
+                        <option value="">Select your background</option>
+                        <option value="CSE">Computer Science (CSE)</option>
+                        <option value="MBA">Business Administration (MBA)</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="resume">Upload Resume (PDF/DOC)</label>
+                    <input type="file" id="resume" accept=".pdf,.doc,.docx" required>
+                </div>
+                <div class="form-group">
+                    <label for="skills">Key Skills (comma separated)</label>
+                    <input type="text" id="skills" placeholder="e.g. JavaScript, React, Node.js">
+                </div>
+                <button type="submit" id="start-btn" class="primary-btn">Start Interview</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="interview-container" class="hidden">
+        <div class="interview-header">
+            <div class="timer-container">
+                <span id="timer">08:00</span>
+                <div class="progress-bar">
+                    <div id="progress" class="progress"></div>
+                </div>
+            </div>
+            <button id="coding-quiz-btn" class="hidden">Start Coding Quiz</button>
+        </div>
+
+        <div class="interview-main">
+            <div class="video-container">
+                <video id="user-video" autoplay muted></video>
+                <div class="bot-avatar">
+                    <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f916.png" alt="Bot">
+                </div>
+            </div>
+            
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <div class="response-status">
+                    <div id="response-indicator" class="listening-inactive">
+                        <div class="listening-animation">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div id="response-status-text">Waiting for your answer...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-container" class="hidden">
+        <div class="report-card">
+            <h2>Interview Performance Report</h2>
+            <div id="report-content">
+                <!-- Report will be generated here -->
+            </div>
+            <button id="restart-btn" class="primary-btn">Start New Interview</button>
+        </div>
+    </div>
+
+    <div id="coding-container" class="hidden">
+        <div class="coding-header">
+            <h2>Coding Challenge</h2>
+            <span id="coding-timer">04:00</span>
+        </div>
+        <div class="coding-main">
+            <div class="problem-statement">
+                <h3 id="problem-title">Problem: Array Manipulation</h3>
+                <p id="problem-description">
+                    Write a function that finds the two numbers in an array that add up to a specific target.
+                </p>
+                <pre id="problem-example">
+Example:
+Input: nums = [2,7,11,15], target = 9
+Output: [0,1]
+Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].
+                </pre>
+            </div>
+            <div class="code-editor">
+                <textarea id="code-area" placeholder="Write your solution here...">function twoSum(nums, target) {
+    // Write your solution here
+    
+}</textarea>
+            </div>
+            <div class="coding-controls">
+                <button id="run-code-btn" class="secondary-btn">Run Code</button>
+                <button id="submit-code-btn" class="primary-btn">Submit Solution</button>
+                <button id="return-interview-btn" class="tertiary-btn">Return to Interview</button>
+            </div>
+            <div id="code-output" class="code-output hidden">
+                <h4>Output:</h4>
+                <pre id="output-content"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="test.js"></script>
+</body>
+</html>

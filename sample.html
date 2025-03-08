@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Parser</title>
+    <link rel="stylesheet" href="sample.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Resume Parser</h2>
+        <label for="username">Enter Username:</label>
+        <input type="text" id="username" placeholder="Enter your username">
+
+        <label for="resume">Upload Resume (PDF/DOCX):</label>
+        <input type="file" id="resume" accept=".pdf, .docx">
+        
+        <button onclick="parseResume()">Extract Details</button>
+
+        <h3>Extracted Data:</h3>
+        <pre id="output"></pre>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="sample.js"></script> 
+    
+</body>
+</html>

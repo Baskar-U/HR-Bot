@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MockVox Platform - Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #10a37f;
+            --secondary-color: #f7f7f7;
+            --text-color: #353740;
+            --sidebar-width: 250px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #f9f9f9;
+            padding: 20px 0;
+            border-right: 1px solid #e5e5e5;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .logo {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary-color);
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-weight: 600;
+            font-size: 20px;
+        }
+        
+        .sidebar-menu {
+            margin-top: 20px;
+        }
+        
+        .sidebar-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .sidebar-item:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .sidebar-item.active {
+            background-color: #e0f7f1;
+            border-right: 3px solid var(--primary-color);
+        }
+        
+        /* Main content styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            height: 64px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 20px;
+        }
+        
+        .nav-item {
+            margin-left: 20px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 38px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #6e6e80;
+            margin-bottom: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .stat-card h3 {
+            font-size: 16px;
+            color: #6e6e80;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .recent-activity {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .section-header {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .activity-list {
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+        }
+        
+        .activity-item {
+            padding: 16px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-item .time {
+            color: #6e6e80;
+            font-size: 14px;
+        }
+        
+        .model-usage {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 30px;
+        }
+        
+        .model-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            border: 1px solid #e5e5e5;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0;
+            transition: width 1s ease-in-out;
+        }
+        
+        .model-details {
+            display: flex;
+            justify-content: space-between;
+            color: #6e6e80;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo"></div>
+            <div class="logo-text">MockVox</div>
+        </div>
+        <div class="sidebar-menu">
+            <div class="sidebar-item">Overview</div>
+            <div class="sidebar-item">Try This</div>
+            <div class="sidebar-item">Settings</div>
+            <div class="sidebar-item active">Dashboard</div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="navbar">
+            <div class="nav-item">Documentation</div>
+            <div class="nav-item">Pricing</div>
+            <div class="nav-item">API</div>
+            <div class="nav-item">Profile</div>
+        </div>
+        
+        <div class="content">
+            <h1>Dashboard</h1>
+            <p>Monitor your API usage, recent activity, and model performance.</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total API Calls</h3>
+                    <div class="value">14,329</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Requests</h3>
+                    <div class="value">24</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Response Time</h3>
+                    <div class="value">276ms</div>
+                </div>
+                <div class="stat-card">
+                    <h3>API Keys</h3>
+                    <div class="value">3</div>
+                </div>
+            </div>
+            
+            <div class="recent-activity">
+                <h2 class="section-header">Recent Activity</h2>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div>Text completion request (MockVox-4)</div>
+                        <div class="time">2 minutes ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div>Text completion request (MockVox-4)</div>
+                        <div class="time">15 minutes ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div>Image generation request (PixelGen)</div>
+                        <div class="time">1 hour ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div>Text completion request (MockVox-3)</div>
+                        <div class="time">3 hours ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div>Text embedding request (EmbedX)</div>
+                        <div class="time">5 hours ago</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h2 class="section-header">Model Usage</h2>
+            <div class="model-usage">
+                <div class="model-card">
+                    <h3>MockVox-4</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="mockvox4-progress"></div>
+                    </div>
+                    <div class="model-details">
+                        <div>8,452 requests</div>
+                        <div>71% of quota</div>
+                    </div>
+                </div>
+                <div class="model-card">
+                    <h3>MockVox-3</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="mockvox3-progress"></div>
+                    </div>
+                    <div class="model-details">
+                        <div>3,284 requests</div>
+                        <div>32% of quota</div>
+                    </div>
+                </div>
+                <div class="model-card">
+                    <h3>PixelGen</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="pixelgen-progress"></div>
+                    </div>
+                    <div class="model-details">
+                        <div>1,836 requests</div>
+                        <div>45% of quota</div>
+                    </div>
+                </div>
+                <div class="model-card">
+                    <h3>EmbedX</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="embedx-progress"></div>
+                    </div>
+                    <div class="model-details">
+                        <div>757 requests</div>
+                        <div>15% of quota</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple navigation script
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active class from all items
+                document.querySelectorAll('.sidebar-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Navigation logic
+                const page = this.textContent.trim();
+                if (page === 'Overview') {
+                    window.location.href = 'index.html';
+                } else if (page === 'Try This') {
+                    window.location.href = 'trythis.html';
+                } else if (page === 'Settings') {
+                    window.location.href = 'settings.html';
+                }
+            });
+        });
+
+        // ✅ Navbar Navigation (Including API Page)
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const page = this.textContent.trim();
+                if (page === 'Documentation') {
+                    window.location.href = 'documentation.html';
+                } else if (page === 'Pricing') {
+                    window.location.href = 'pricing.html';
+                } else if (page === 'API') {
+                    window.location.href = 'api.html';  // ✅ Redirects to API page
+                } else if (page === 'Profile') {
+                    window.location.href = 'profile.html';
+                }
+            });
+        });
+        
+        // Animate progress bars
+        document.getElementById('mocvox4-progress').style.width = '71%';
+        document.getElementById('mockvox3-progress').style.width = '32%';
+        document.getElementById('pixelgen-progress').style.width = '45%';
+        document.getElementById('embedx-progress').style.width = '15%';
+    </script>
+</body>
+</html>
