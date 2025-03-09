@@ -1,5 +1,5 @@
 // DOM Elements
-import questionBank from './questionscse.js';
+import questionBank from './questionscse1.js';
 const welcomeContainer = document.getElementById('welcome-container');
 const interviewContainer = document.getElementById('interview-container');
 const reportContainer = document.getElementById('report-container');
@@ -32,11 +32,11 @@ let username = '';
 let background = '';
 let resumeContent = '';
 let extractedSkills = [];
-let interviewDuration = 8 * 60; // 8 minutes in seconds
+let interviewDuration = 4 * 60; // 8 minutes in seconds
 let remainingTime = interviewDuration;
 let timerInterval;
 let codingTimerInterval;
-let codingRemainingTime = 4 * 60; // 4 minutes in seconds
+let codingRemainingTime = 2*60; // 4 minutes in seconds
 let speechRecognition;
 let isListening = false;
 let currentQuestionIndex = 0;
@@ -211,28 +211,51 @@ async function initCamera() {
 }
 
 // Timer functions
+let codingQuizTriggered = false; // ✅ Prevent multiple quiz prompts
+
+let quizTriggered = false; // ✅ Ensure quiz appears only once
+
 function startTimer() {
     updateTimerDisplay();
+
+    // ✅ Set random time for quiz prompt (between 1:00 and 3:00 min left)
+    const quizTriggerTime = Math.floor(Math.random() * (180 - 60) + 60); // Between 1 min & 3 min
+
     timerInterval = setInterval(() => {
         remainingTime--;
         updateTimerDisplay();
-        
-        // Update progress bar
+
+        // ✅ Check if it's time for the quiz
+        if (remainingTime === quizTriggerTime && !quizTriggered) {
+            quizTriggered = true;
+            waitForUserResponseThenShowQuiz(); // ✅ Wait for response before showing quiz
+        }
+
+        // ✅ Show progress bar
         const progress = (1 - remainingTime / interviewDuration) * 100;
         progressBar.style.width = `${progress}%`;
-        
-        // Show coding quiz button at 4 minutes
-        if (remainingTime === interviewDuration / 2) {
-            codingQuizBtn.classList.remove('hidden');
-        }
-        
-        // End interview when time is up
+
+        // ✅ End interview when time is up
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
             endInterview();
         }
     }, 1000);
 }
+
+
+function waitForUserResponseThenShowQuiz() {
+    if (isProcessingAnswer) {
+        // ✅ Wait until user completes response
+        setTimeout(waitForUserResponseThenShowQuiz, 2000);
+    } else {
+        // ✅ Once response is processed, show quiz message
+        showCodingQuizPrompt();
+    }
+}
+
+
+
 
 function updateTimerDisplay() {
     const minutes = Math.floor(remainingTime / 60);
@@ -311,9 +334,6 @@ function addBotMessage(text, delay = 0, speak = true) {
         }, 20);
     }, delay);
 }
-
-
-
 
 
 
@@ -404,10 +424,49 @@ function extractSkillsFromResume(text) {
     return foundSkills;
 }
 
+
+
+function addBotMessageWithButton(text, buttonText, buttonId, buttonAction) {
+    // Create message container
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message bot-message';
+
+    // Create bot's name
+    const botNameElement = document.createElement('div');
+    botNameElement.className = 'message-name';
+    botNameElement.textContent = "MockVox";
+
+    // Create message text
+    const messageTextElement = document.createElement('div');
+    messageTextElement.className = 'message-text';
+    messageTextElement.textContent = text;
+
+    // Create the button
+    const buttonElement = document.createElement('button');
+    buttonElement.id = buttonId;
+    buttonElement.textContent = buttonText;
+    buttonElement.className = "coding-quiz-btn"; // Add CSS class for styling
+    buttonElement.onclick = buttonAction; // Assign action function
+
+    // Append elements
+    messageElement.appendChild(botNameElement);
+    messageElement.appendChild(messageTextElement);
+    messageElement.appendChild(buttonElement); // Append the button
+
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+function showCodingQuizPrompt() {
+    addBotMessageWithButton(
+        "Attempt the quiz by clicking this button:",
+        "Start Coding Quiz",
+        "coding-quiz-btn",
+        startCodingQuiz
+    );
+}
+
 // Technical questions based on skills
 function generateTechnicalQuestions() {
-    
-    
     const questions = [];
     const followUpMessages = [
         "Can you provide more details or examples about that?",
@@ -421,39 +480,57 @@ function generateTechnicalQuestions() {
         "Can you describe a situation where this skill helped you solve a problem?",
         "What improvements would you suggest for this technology or approach?"
     ];
-    
-    // Select a random follow-up message
-    const randomFollowUp = followUpMessages[Math.floor(Math.random() * followUpMessages.length)];
-    // Add questions based on extracted skills
+
+    // Store selected questions to avoid duplicates
+    const usedQuestions = new Set();
+
     extractedSkills.forEach(skill => {
         if (questionBank[skill]) {
-            // Randomly select one question for each skill
-            const randomIndex = Math.floor(Math.random() * questionBank[skill].length);
-            questions.push({
-                skill: skill,
-                question: questionBank[skill][randomIndex],
-                followup: randomFollowUp
-            });
+            let availableQuestions = questionBank[skill].filter(q => !usedQuestions.has(q.question));
+
+            if (availableQuestions.length > 0) {
+                let randomIndex = Math.floor(Math.random() * availableQuestions.length);
+                let selectedQuestion = availableQuestions[randomIndex];
+
+                // Mark this question as used
+                usedQuestions.add(selectedQuestion.question);
+
+                // Assign a random follow-up message
+                let randomFollowUp = followUpMessages[Math.floor(Math.random() * followUpMessages.length)];
+
+                questions.push({
+                    skill: skill,
+                    question: selectedQuestion.question,
+                    answer: selectedQuestion.answer, // ✅ Keep answer for later comparison
+                    followup: randomFollowUp
+                });
+            }
         }
     });
-    
-    // If not enough skill-based questions, add default questions
-    while (questions.length < 5) {
-        const randomIndex = Math.floor(Math.random() * questionBank['Default'].length);
-        const defaultQuestion = questionBank['Default'][randomIndex];
-        
-        // Check if this question is already included
-        if (!questions.some(q => q.question === defaultQuestion)) {
+
+    // ✅ Ensure at least 5 questions are included
+    while (questions.length < 5 && questionBank['Default']) {
+        let availableDefaultQuestions = questionBank['Default'].filter(q => !usedQuestions.has(q.question));
+
+        if (availableDefaultQuestions.length > 0) {
+            let randomIndex = Math.floor(Math.random() * availableDefaultQuestions.length);
+            let selectedQuestion = availableDefaultQuestions[randomIndex];
+
+            // Mark this question as used
+            usedQuestions.add(selectedQuestion.question);
+
             questions.push({
                 skill: 'General',
-                question: defaultQuestion,
+                question: selectedQuestion.question,
+                answer: selectedQuestion.answer, // ✅ Keep answer for later comparison
                 followup: "Can you provide more details or examples about that?"
             });
         }
     }
-    
+
     return questions;
 }
+
 
 // Coding challenges
 const codingChallenges = [
@@ -540,6 +617,7 @@ function analyzeGrammar(text) {
         }
     });
     
+
     // Penalty for repeated words
     const words = text.toLowerCase().split(/\s+/);
     for (let i = 1; i < words.length; i++) {
@@ -600,143 +678,223 @@ function analyzeCommunication(text) {
 }
 
 // Mock technical answer evaluation
-function analyzeTechnical(text, questionIndex) {
-    if (!questions[questionIndex]) return 50;
-    
-    const skill = questions[questionIndex].skill;
-    let score = 70; // Start with a baseline score
-    
-    // Keywords to look for based on the skill
-    const keywordsBySkill = {
-        'JavaScript': ['variable', 'function', 'scope', 'hoisting', 'closure', 'promise', 'async', 'event', 'dom', 'callback'],
-        'Python': ['function', 'class', 'method', 'list', 'tuple', 'dictionary', 'generator', 'exception', 'try', 'except'],
-        'React': ['component', 'props', 'state', 'hook', 'effect', 'context', 'virtual dom', 'jsx', 'render', 'lifecycle'],
-        'Full Stack': ['frontend', 'backend', 'database', 'api', 'server', 'client', 'middleware', 'authentication', 'rest', 'mvc'],
-        'General': ['problem', 'solution', 'approach', 'experience', 'project', 'learn', 'develop', 'implement', 'design', 'build']
-    };
-    
-    // Use general keywords as fallback
-    const keywords = keywordsBySkill[skill] || keywordsBySkill['General'];
-    
-    // Count matching keywords
-    let keywordCount = 0;
-    for (const keyword of keywords) {
-        if (text.toLowerCase().includes(keyword)) {
-            keywordCount += 1;
-        }
-    }
-    
-    // Adjust score based on keyword matches
-    if (keywordCount >= 5) {
-        score += 30;
-    } else if (keywordCount >= 3) {
-        score += 20;
-    } else if (keywordCount >= 1) {
-        score += 10;
+function analyzeTechnical(userText, questionIndex) {
+    if (!questions[questionIndex] || !questions[questionIndex].answer) return 50; // Default score if question or answer is missing
+
+    const correctAnswer = questions[questionIndex].answer.toLowerCase();
+
+    // ✅ Normalize text: Remove punctuation & split into words
+    const tokenize = (text) => text.replace(/[.,!?]/g, '').toLowerCase().split(/\s+/);
+
+    const userWords = tokenize(userText);
+    const correctWords = tokenize(correctAnswer);
+
+    // ✅ Calculate word overlap (how many words match)
+    let matchedWords = userWords.filter(word => correctWords.includes(word)).length;
+    let similarityScore = (matchedWords / correctWords.length) * 100;
+
+    // ✅ Set base score
+    let score = 50; 
+
+    // ✅ Adjust score based on similarity
+    if (similarityScore > 80) {
+        score += 40; // Very close match
+    } else if (similarityScore > 60) {
+        score += 25;
+    } else if (similarityScore > 40) {
+        score += 15;
+    } else if (similarityScore > 20) {
+        score += 5;
     } else {
-        score -= 20; // No relevant keywords
+        score -= 10; // Poor match
     }
-    
-    // Length of response
-    const wordCount = text.split(/\s+/).length;
-    if (wordCount < 15) {
-        score -= 20; // Too short for a technical answer
-    } else if (wordCount > 50) {
-        score += 10; // Detailed response
+
+    // ✅ Consider length of response (short answers might not be sufficient)
+    if (userWords.length < 5) {
+        score -= 20; // Too short
+    } else if (userWords.length > 50) {
+        score += 10; // Well-explained answer
     }
-    
-    return Math.max(Math.min(score, 100), 0); // Ensure score is between 0 and 100
+
+    // ✅ Ensure score is between 0 and 100
+    return Math.max(Math.min(score, 100), 0);
 }
+
 
 // Process user response and determine next steps
 function processUserResponse(text) {
     const currentQuestion = questions[currentQuestionIndex];
     const technicalScore = analyzeTechnical(text, currentQuestionIndex);
+    const correctAnswer = currentQuestion.answer.toLowerCase();
+    const userResponse = text.trim().toLowerCase();
 
-    // List of phrases indicating uncertainty
+    // ✅ Tokenization: Split words from user & correct answer
+    const answerWords = correctAnswer.split(/\s+/);
+    const userWords = userResponse.split(/\s+/);
+
+    // ✅ Calculate match percentage
+    let wordsMatched = userWords.filter(word => answerWords.includes(word)).length;
+    let matchScore = (wordsMatched / answerWords.length) * 100;
+
+    // ✅ Compliments based on score (Randomized)
+    const compliments = {
+        high: [
+            "🌟 Excellent answer! You covered almost everything perfectly!",
+            "🔥 Amazing response! Your knowledge really shines!",
+            "🎯 Spot on! That was a fantastic explanation!",
+            "💡 Brilliant! You nailed the key concepts effortlessly!",
+            "🎓 Outstanding! You explained that like a true expert.",
+            "🚀 Superb response! You clearly have a deep understanding.",
+            "🌟 That was one of the best answers so far! Keep it up!",
+            "💎 Exceptional! Your clarity and detail are impressive.",
+            "🏆 You're on another level! That was a masterful explanation.",
+            "✅ 100% correct! You really know your stuff!",
+            "⚡ Wow! That was an incredibly well-thought-out answer.",
+            "🔬 Great depth! You covered both theory and real-world applications.",
+            "🔝 Fantastic work! You structured your response perfectly.",
+            "✨ Impressive! You made a complex topic sound easy.",
+            "🏅 Gold standard response! That was very well explained.",
+            "🎤 Mic drop! You absolutely nailed that question.",
+            "📚 Your knowledge is strong, and your explanation was crystal clear!",
+            "💯 Full marks for that answer! You left no room for doubt.",
+            "🚀 High-level response! This shows strong technical expertise.",
+            "🧠 Genius! That answer demonstrated your deep understanding."
+        ],
+        medium: [
+            "💡 Great job! Your answer is well-structured, but you can add a bit more detail.",
+            "👏 Nice work! You got most of it right. A little more depth would make it even better.",
+            "✨ Good response! You have a strong grasp, keep refining your explanations.",
+            "👍 Solid answer! Just expand on a few points to make it even stronger.",
+            "🎯 Almost there! You're doing great, just a little more refinement needed.",
+            "🔍 Good explanation! Maybe provide an example to make it even clearer.",
+            "📌 You've got the right idea! A bit more technical detail would be helpful.",
+            "🚦 You're on the right path! Try to add some real-world applications.",
+            "🔗 Well-structured response! Adding a bit more logic would make it even better.",
+            "📝 Good work! If you elaborate a bit more, it'll be even stronger.",
+            "💭 Your thoughts are well-organized! Just back it up with some examples.",
+            "🎵 Great rhythm in your explanation! Adding an analogy might help clarify further.",
+            "🔎 Nice breakdown of the topic! Try to link it to related concepts.",
+            "🚀 You're progressing well! A little more confidence will make it even better.",
+            "📖 You explained the core idea well! Consider mentioning best practices.",
+            "⚡ Good explanation! If you connect it to a real-world scenario, it will stand out.",
+            "🔬 Logical and well-thought-out! A bit more detail would make it exceptional.",
+            "🏗 Good foundation! Just add some depth to solidify your point.",
+            "🎯 Almost a bullseye! A bit more clarity, and you'll hit the mark.",
+            "🛠 Solid answer! Fine-tune it with technical insights for a perfect response."
+        ],
+        average: [
+            "👍 Good attempt! You're on the right track, let's dive a little deeper.",
+            "✅ Decent response! Some points are correct, but try to elaborate more.",
+            "🤔 Not bad! With a bit more clarity, this could be a strong answer.",
+            "🔍 You're getting there! A bit more detail will help refine your explanation.",
+            "🔄 Keep going! You're close to a great answer, just add more structure.",
+            "⚡ You’ve got potential! A few refinements will make this answer shine.",
+            "🛤 You’re on the right path! Try rephrasing for more precision.",
+            "🎭 Good effort! A little more confidence in your explanation would help.",
+            "🔄 Almost there! Try to focus on key technical points for a stronger impact.",
+            "🧩 Nice attempt! If you can connect different concepts, it will be stronger.",
+            "🔎 Your response is forming well! Keep building on that knowledge.",
+            "📚 Decent try! Try to recall similar concepts to reinforce your answer.",
+            "🚀 You're improving! Add specific details to enhance your response.",
+            "🎯 You have the basic idea! Expanding on it will make your answer more complete.",
+            "🔄 Good try! Now, refine it with some key terms and structured thinking.",
+            "💬 You're thinking in the right direction! Just be more concise and precise.",
+            "🔬 You’ve captured part of the idea! Strengthen it with an example.",
+            "📖 A little more reading on this topic, and you'll have a perfect answer!",
+            "📝 Not bad at all! If you provide some real-world use cases, it will be stronger.",
+            "🛠 Your understanding is there! Work on refining how you explain it."
+        ],
+        low: [
+            "🤔 That's an interesting take! Let's move to the next one.",
+            "🔄 No worries! Let's keep learning and move on to the next question.",
+            "📖 Keep practicing! You'll get better with more attempts.",
+            "🚀 Learning is a journey! Let's try another one and keep improving.",
+            "🎯 You're trying, and that's what matters! Keep at it!",
+            "📌 This is a great chance to improve! Keep challenging yourself.",
+            "⚡ It's okay! Every attempt brings you closer to mastery.",
+            "🌱 Mistakes are part of learning! Keep pushing forward.",
+            "🔗 You're on the learning curve! Don't stop, and it'll click soon.",
+            "📚 No stress! Let’s move on and revisit this concept later.",
+            "💡 Keep thinking! The more you try, the better you'll understand.",
+            "🔎 Keep exploring! You'll find the right way to explain it with practice.",
+            "🔧 It’s a work in progress! Try looking at similar questions for guidance.",
+            "🚦 Not quite there, but you're moving forward. Keep at it!",
+            "🛤 Everyone starts somewhere! Keep practicing, and it'll get easier.",
+            "🎵 You're warming up! Keep going, and soon you'll master this.",
+            "🔄 That was a good effort! Let's focus on the next question.",
+            "🔍 Let’s shift gears and try another one!",
+            "📝 Don't worry! Every expert was once a beginner too.",
+            "🏗 This is a stepping stone! Every challenge helps you grow."
+        ]
+    };
+    
+
+    // ✅ Select a random compliment based on score range
+    let compliment;
+    if (technicalScore > 80) {
+        compliment = compliments.high[Math.floor(Math.random() * compliments.high.length)];
+    } else if (technicalScore > 60) {
+        compliment = compliments.medium[Math.floor(Math.random() * compliments.medium.length)];
+    } else if (technicalScore > 50) {
+        compliment = compliments.average[Math.floor(Math.random() * compliments.average.length)];
+    } else {
+        compliment = compliments.low[Math.floor(Math.random() * compliments.low.length)];
+    }
+
+    // ✅ Uncertainty handling
     const uncertainResponses = [
         "i don't know", "i am not sure", "i have no idea",
         "i'm unsure", "not sure", "no clue", "i can't answer that"
     ];
 
-    // Generate a compliment
-    const compliments = [
-        "That's an interesting perspective!",
-        "Thank you for sharing your thoughts.",
-        "I appreciate your detailed answer.",
-        "Great insights!",
-        "That's helpful to know.",
-        "I like your approach to this.",
-        "Thanks for explaining that so clearly.",
-        "That's a good point you've made."
-    ];
-    const randomCompliment = compliments[Math.floor(Math.random() * compliments.length)];
-
-    const transitionPhrases = [
-        "Let's keep the momentum going. Here's your next question:",
-        "Alright, moving forward! Here's your next challenge:",
-        "You're doing well! Here's another question for you:",
-        "Let's continue! Check out this question:",
-        "Nice effort! Now, try this one:",
-        "Here's something interesting for you to answer:"
-    ];
-    const randomPhrases = transitionPhrases[Math.floor(Math.random() * transitionPhrases.length)];
     const encouragementMessages = [
-        "No problem! Keep going, you'll get better. Here's another question:",
+        "No worries! Keep going, you'll get better. Here's another question:",
         "It's okay! Learning takes time. Let's try this question instead:",
         "Don't worry, you'll get it next time! How about this question:",
         "That's fine! Every expert was once a beginner. Try answering this:",
-        "No stress! You're doing great. Here's another question for you:",
-        "No worries! Let's move on to another interesting question:",
-        "It's totally fine! Here's another question to challenge you:",
-        "Great effort! Don't worry, let's tackle this one instead:",
-        "No problem at all! You're learning. Try answering this one:",
-        "You're doing great! Let's move on to this next question:"
+        "No stress! You're doing great. Here's another question for you:"
     ];
-    
+
     // ✅ Handle "I don't know" BEFORE checking score
     if (uncertainResponses.some(response => text.toLowerCase().includes(response))) {
         const randomEncouragement = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
         addBotMessage(randomEncouragement);
-        
-        // ✅ Move to the next question without triggering follow-up
+
+        // ✅ Move to the next question
         setTimeout(() => {
             currentQuestionIndex++;
             if (currentQuestionIndex < questions.length && remainingTime > 0) {
                 addBotMessage(questions[currentQuestionIndex].question);
-            } else if (remainingTime > 0) {
-                addBotMessage(randomCompliment + " We've completed all the technical questions. Let's talk more about your background. Tell me about a challenging project you worked on recently.");
+            } else {
+                addBotMessage("Great effort! We've completed all the technical questions. Let's talk more about your background.");
+                setTimeout(() => askRandomGeneralQuestion(), 2000);
             }
         }, 2000);
 
-        return; // ✅ Prevent further execution & avoid follow-up questions
+        return;
     }
 
-    // ✅ If the user gave an actual answer, proceed with scoring
-    if (technicalScore < 50 && !followupAsked) {
-        followupAsked = true;
+    // ✅ Follow-up logic for average answers
+    if (technicalScore === 50) {
         setTimeout(() => {
-            addBotMessage(randomCompliment + " " + currentQuestion.followup);
+            addBotMessage(compliment + " " + currentQuestion.followup);
         }, 1000);
-    } else {
-        followupAsked = false;
-        currentQuestionIndex++;
-
-        // ✅ If more questions remain, continue the interview
-        if (currentQuestionIndex < questions.length && remainingTime > 0) {
-            setTimeout(() => {
-                addBotMessage(randomCompliment + " " + randomPhrases + " " + questions[currentQuestionIndex].question);
-            }, 1000);
-        } else if (remainingTime > 0) {
-            // ✅ If no more technical questions, switch to personal background discussion
-            setTimeout(() => {
-                addBotMessage(randomCompliment + " We've completed all the technical questions. Let's talk more about your background. Tell me about a challenging project you worked on recently.");
-            }, 1000);
-        }
+        return;
     }
+
+    // ✅ Move to the next question for good/poor answers
+    addBotMessage(compliment);
+    
+    setTimeout(() => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length && remainingTime > 0) {
+            addBotMessage("Here's your next question: " + questions[currentQuestionIndex].question);
+        } else {
+            addBotMessage("That wraps up the technical round! Now, let's talk about your experience.");
+            setTimeout(() => askRandomGeneralQuestion(), 2000);
+        }
+    }, 2000);
 }
-
-
 
 // Start coding quiz
 function startCodingQuiz() {
@@ -755,30 +913,6 @@ function startCodingQuiz() {
 }
 
 // Submit coding solution
-// List of general questions
-const generalQuestions = [
-    "Tell me about a time you solved a difficult problem.",
-    "What motivates you to work in this field?",
-    "How do you handle constructive criticism?",
-    "Describe a situation where you worked as part of a team.",
-    "If you could learn any new skill, what would it be?",
-    "What is your biggest strength and how do you use it?",
-    "Can you give an example of a time you showed leadership?",
-    "How do you manage stress in a work environment?"
-];
-
-// List of compliments
-const compliments = [
-    "That’s a great perspective!",
-    "I really like the way you think!",
-    "That’s an insightful answer!",
-    "You have a strong way of explaining things!",
-    "Impressive response!",
-    "You're doing great! Keep it up!",
-    "That was a well-thought-out answer!",
-    "I can see your confidence in this!"
-];
-
 let askedQuestions = new Set(); // Track asked questions
 
 function askRandomGeneralQuestion() {
@@ -787,7 +921,14 @@ function askRandomGeneralQuestion() {
         return;
     }
 
-    // Pick a random question that hasn't been asked
+    // ✅ Check if all questions are asked
+    if (askedQuestions.size >= generalQuestions.length) {
+        addBotMessage("That was a great conversation! We've covered everything. Thank you for your time! 😊");
+        setTimeout(() => endInterview(), 3000);
+        return;
+    }
+
+    // ✅ Pick a random question that hasn't been asked
     let randomIndex;
     do {
         randomIndex = Math.floor(Math.random() * generalQuestions.length);
@@ -795,27 +936,41 @@ function askRandomGeneralQuestion() {
 
     askedQuestions.add(randomIndex);
 
-    // Ask the question
+    // ✅ Ask the question
     addBotMessage(generalQuestions[randomIndex]);
+
+    // ✅ Wait for user's response before proceeding
     handleUserResponse(userResponse);
-    
 }
-// Function to handle user response
+
+// ✅ Function to handle user response
 function handleUserResponse(userResponse) {
     if (remainingTime <= 0) {
         endInterview();
         return;
     }
 
-    // Give a random compliment
+    // ✅ Give a random compliment
     const randomCompliment = compliments[Math.floor(Math.random() * compliments.length)];
     addBotMessage(randomCompliment);
 
-    // Ask the next question after a short delay
+    // ✅ Ask the next question after a short delay
     setTimeout(() => {
         askRandomGeneralQuestion();
     }, 2000);
 }
+
+// ✅ Function to wait for user response
+function waitForUserResponse(callback) {
+    let checkResponse = setInterval(() => {
+        if (userResponseReceived) {
+            clearInterval(checkResponse);
+            callback(userResponseReceived); // Process the response
+            userResponseReceived = null; // Reset for next question
+        }
+    }, 500);
+}
+
 
 // Start the process after the coding section
 function submitCodingSolution() {
@@ -1148,7 +1303,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Start interview
     function startInterview() {
         welcomeContainer.classList.add('hidden');
         interviewContainer.classList.remove('hidden');
@@ -1165,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
     
-        // ✅ Initialize camera, voice visualization, and speech recognition (but don't start listening yet)
+        // ✅ Initialize camera, voice visualization, and speech recognition
         initCamera();
         initSpeechRecognition();
         initVoiceVisualization();
@@ -1197,23 +1351,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // ✅ Step 2: Speak and display skills message after welcome message is spoken
         setTimeout(() => {
             const skillMessages = [
-                "I notice you have experience with ${skills}. That's impressive!",
-                "Your knowledge in ${skills} really stands out!",
-                "Having expertise in ${skills} is a great asset!",
-                "I see you’re skilled in ${skills}. That’s fantastic!",
-                "Your proficiency in ${skills} is truly remarkable!",
-                "Wow! ${skills} is a strong skill to have!",
-                "It's great that you have experience in ${skills}!",
-                "I like that you're experienced in ${skills}.",
-                "Your background in ${skills} is quite valuable.",
-                "I'm impressed by your skills in ${skills}!"
+                `I notice you have experience with ${extractedSkills.join(', ')}. That's impressive!`,
+                `Your knowledge in ${extractedSkills.join(', ')} really stands out!`,
+                `Having expertise in ${extractedSkills.join(', ')} is a great asset!`,
+                `I see you’re skilled in ${extractedSkills.join(', ')}. That’s fantastic!`,
+                `Your proficiency in ${extractedSkills.join(', ')} is truly remarkable!`,
+                `Wow! ${extractedSkills.join(', ')} is a strong skill to have!`,
+                `It's great that you have experience in ${extractedSkills.join(', ')}!`,
+                `I like that you're experienced in ${extractedSkills.join(', ')}.`,
+                `Your background in ${extractedSkills.join(', ')} is quite valuable.`,
+                `I'm impressed by your skills in ${extractedSkills.join(', ')}!`
             ];
-            const randomIndex = Math.floor(Math.random() * skillMessages.length);
-            const selectedMessage = skillMessages[randomIndex];
-            const formattedMessage = selectedMessage.replace("${skills}", extractedSkills.join(', '));
-    
-            addBotMessage(formattedMessage, 0, false);
-        }, 5000); // ✅ Wait for welcome message to finish
+            const randomMessage = skillMessages[Math.floor(Math.random() * skillMessages.length)];
+            addBotMessage(randomMessage, 0, false);
+        }, 5000); // ✅ Fixed skills message
     
         // ✅ Step 3: Speak a transition message before the first question
         setTimeout(() => {
@@ -1229,19 +1380,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 "Let's put your skills to the test with this first question.",
                 "You're off to a great start! Now, let's move to the first question."
             ];
-        
-            // ✅ Select a random transition sentence
+    
             const randomSentence = transitionSentences[Math.floor(Math.random() * transitionSentences.length)];
-        
-            // ✅ Speak the selected transition sentence
             speakText(randomSentence);
-        
         }, 9000); // ✅ Wait for skills message to finish
     
         // ✅ Step 4: Speak and display the first question
         setTimeout(() => {
             const firstQuestion = questions[0].question;
-    
             addBotMessage(firstQuestion, 0, true);
     
             // ✅ Step 5: Enable mic 1 second after the question is spoken
@@ -1256,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startTimer();
         }, 14000);
     }
+    
     
     
     
@@ -1304,7 +1451,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Submit code button
-    submitCodeBtn.addEventListener('click', submitCodingSolution);
+    submitCodeBtn.addEventListener('click', ()=>{
+        submitCodingSolution();
+        codingQuizBtn.classList.add('hidden');
+    });
+    
     
     // Return to interview button
     returnInterviewBtn.addEventListener('click', () => {
